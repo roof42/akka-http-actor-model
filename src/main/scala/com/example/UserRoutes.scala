@@ -27,8 +27,7 @@ class UserRoutes(userRegistry: ActorRef[InMemoryUserRepository.Command])(
     system.settings.config.getDuration("my-app.routes.ask-timeout")
   )
 
-  def getUsers(): Future[Users] =
-    userRegistry.ask(GetUsers)
+  def getUsers: Future[Users] = userRegistry.ask(GetUsers)
   def getUser(name: String): Future[GetUserResponse] =
     userRegistry.ask(GetUser(name, _))
   def createUser(user: User): Future[ActionPerformed] =
@@ -36,15 +35,12 @@ class UserRoutes(userRegistry: ActorRef[InMemoryUserRepository.Command])(
   def deleteUser(name: String): Future[ActionPerformed] =
     userRegistry.ask(DeleteUser(name, _))
 
-  // #all-routes
-  // #users-get-post
-  // #users-get-delete
   val userRoutes: Route =
     pathPrefix("users") {
       pathEnd {
         concat(
           get {
-            complete(StatusCodes.OK, getUsers())
+            complete(StatusCodes.OK, getUsers)
           },
           post {
             entity(as[User]) { user =>
