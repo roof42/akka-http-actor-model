@@ -41,46 +41,11 @@ class UserRoutes(userRegistry: ActorRef[InMemoryUserRepository.Command])(
   // #users-get-delete
   val userRoutes: Route =
     pathPrefix("users") {
-      concat(
-        // #users-get-delete
-        pathEnd {
-          concat(
-            get {
-              complete(StatusCodes.OK, "OK") // getUsers())
-            },
-            post {
-              entity(as[User]) { user =>
-                onSuccess(createUser(user)) { performed =>
-                  complete((StatusCodes.Created, performed))
-                }
-              }
-            }
-          )
-        },
-        // #users-get-delete
-        // #users-get-post
-        path(Segment) { name =>
-          concat(
-            get {
-              // #retrieve-user-info
-              rejectEmptyResponse {
-                onSuccess(getUser(name)) { response =>
-                  complete(response.maybeUser)
-                }
-              }
-              // #retrieve-user-info
-            },
-            delete {
-              // #users-delete-logic
-              onSuccess(deleteUser(name)) { performed =>
-                complete((StatusCodes.OK, performed))
-              }
-              // #users-delete-logic
-            }
-          )
-        }
-      )
       // #users-get-delete
+      pathEnd {
+        get {
+          complete(StatusCodes.OK, "OK") // getUsers())
+        }
+      }
     }
-  // #all-routes
 }
