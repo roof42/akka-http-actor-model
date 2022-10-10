@@ -13,17 +13,31 @@ import akka.util.Timeout
 
 //#import-json-formats
 //#user-routes-class
-class UserRoutes(userRegistry: ActorRef[InMemoryUserRepository.Command])(
-    implicit val system: ActorSystem[_]
-) {
-
+class UserRoutes(userRegistry: ActorRef[InMemoryUserRepository.Command])
+                (implicit val system: ActorSystem[_]) {
   // #user-routes-class
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   import JsonFormats._
   // #import-json-formats
+  val userRoutes: Route =
+    pathPrefix("users") {
+        concat(pathEndUsers, getAUser, createNewUser)
+    }
 
-  // If ask takes more time than this to complete the request is failed
-  private implicit val timeout = Timeout.create(
+  val pathEndUsers: Route = pathEnd {
+    get {complete(StatusCodes.OK, getUsers)}
+  }
+  val createNewUser: Route = post {
+    entity(as[User]) { user =>
+      onSuccess(createUser(user)) { performed =>
+        complete((StatusCodes.Created, performed))
+      }
+    }
+  }
+
+  val getAUser: Route = get {path(IntNumber) {int => complete(StatusCodes.OK, s"OK GOOD $int")}}
+
+  private implicit val timeout: Timeout = Timeout.create(
     system.settings.config.getDuration("my-app.routes.ask-timeout")
   )
 
@@ -35,21 +49,5 @@ class UserRoutes(userRegistry: ActorRef[InMemoryUserRepository.Command])(
   def deleteUser(name: String): Future[ActionPerformed] =
     userRegistry.ask(DeleteUser(name, _))
 
-  val userRoutes: Route =
-    pathPrefix("users") {
-      pathEnd {
-        concat(
-          get {
-            complete(StatusCodes.OK, getUsers)
-          },
-          post {
-            entity(as[User]) { user =>
-              onSuccess(createUser(user)) { performed =>
-                complete((StatusCodes.Created, performed))
-              }
-            }
-          }
-        )
-      }
-    }
+
 }
